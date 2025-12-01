@@ -1,0 +1,34 @@
+{
+   "configurations": [
+      {
+         "name": "Debug",
+         "type": "cppdbg",
+         "stopAtEntry": true,
+         "request": "launch",
+         "program": "${workspaceFolder}/bin/build_osx",
+         "cwd": "${workspaceFolder}",
+         "internalConsoleOptions": "openOnSessionStart",
+         "MIMode": "lldb",
+         "preLaunchTask": "Debug OSX",
+         "setupCommands": [
+            {
+               "description": "Enable pretty-printing for gdb",
+               "text": "-enable-pretty-printing",
+               "ignoreFailures": true
+            }
+         ],
+      },
+      {
+         "name": "Build and Run",
+         "type": "cppdbg",
+         "stopAtEntry": false,
+         "request": "launch",
+         "program": "${workspaceFolder}/bin/build_osx",
+         "cwd": "${workspaceFolder}",
+         "internalConsoleOptions": "openOnSessionStart",
+         "MIMode": "lldb",
+         "preLaunchTask": "Run OSX",
+      }
+   ],
+   "version": "2.0.0"
+}

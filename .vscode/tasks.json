@@ -1,0 +1,26 @@
+{
+   "tasks": [
+      {
+         "type": "shell",
+         "label": "Debug OSX",
+         "command": "make debug_osx",
+         "problemMatcher": [
+            "$gcc"
+         ],
+         "options": {
+            "cwd": "${workspaceFolder}"
+         },
+         "detail": "Debug Raylib-App"
+      },
+      {
+         "type": "shell",
+         "label": "Run OSX",
+         "command": "make build_osx",
+         "options": {
+            "cwd": "${workspaceFolder}"
+         },
+         "detail": "Run Raylib-App"
+      }
+   ],
+   "version": "2.0.0"
+}

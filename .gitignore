@@ -1,0 +1,9 @@
+bin
+lib/libraylib.a
+lib/raylib.h
+lib/raygui.h
+lib/raymath.h
+lib/rlgl.h
+.DS_Store
+release_macos
+input.txt
