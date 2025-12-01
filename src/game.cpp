@@ -13,6 +13,38 @@
 std::string day_one_one();
 std::string day_one_two();
 
+
+struct backgroundPoint {
+    Vector2 position;
+    Color color;
+    float opacity;
+    float speed;
+    float hspeed;
+};
+std::array<backgroundPoint, 500> backgroundPoints;
+
+// Let it snow let it snow let it snow
+void initializeBackgroundPoints() {
+    for(backgroundPoint& point : backgroundPoints) {
+        point.position = Vector2(GetRandomValue(-200, 640), GetRandomValue(0, 480));
+        point.color = WHITE;
+        point.opacity = (float)GetRandomValue(0,100) / 100;
+        point.speed = point.opacity;
+        point.hspeed = (float)GetRandomValue(0,100) / 100;
+    }
+}
+
+void updateBackgroundPoints() {
+    for(backgroundPoint& point : backgroundPoints) {
+        point.position.y += point.speed;
+        point.position.x += point.hspeed;
+        if(point.position.y > 640) {
+            point.position.y = 0;
+            point.position.x = GetRandomValue(-200, 640);
+        }
+    }
+}
+
 int main() {
 
     int screenWidth = 480;
@@ -22,23 +54,30 @@ int main() {
     float btn2Left = 245;
     float btnWidth = 225;
     float btnHeight = 40;
+    initializeBackgroundPoints();
 
     std::string day_1_1 = "<not solved>";
     std::string day_1_2 = "<not solved>";
     bool textbox_1_1 = false;
     bool textbox_1_2 = false;
 
-
-    InitWindow(screenWidth, screenHeight, "A0C.25*KEYG3N");
+    InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
     GuiLoadStyleCyber();
 
     // Main game loop
     while (!WindowShouldClose()) {
 
+    updateBackgroundPoints();
+
         // Draw
         BeginDrawing();
             ClearBackground(BLACK);
+
+            for(backgroundPoint& point : backgroundPoints) {
+                DrawPixelV(point.position, Fade(WHITE, point.opacity));
+            }
+
             GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
             // DAY 1 ------------------------------------------------------------
