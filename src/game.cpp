@@ -23,6 +23,7 @@ bool checkRepeatingPattern(std::string s);
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
 auto globalTimerStop = std::chrono::high_resolution_clock::now();
 std::string globalLogString = "2025 by ni0r4d";
+bool useTestData = true;
 
 
 struct backgroundPoint {
@@ -64,7 +65,7 @@ int main() {
     float btn1Left = btnMargin;
     float btn2Left = 245;
     float btnWidth = 225;
-    float btnHeight = 40;
+    float btnHeight = 26;
     initializeBackgroundPoints();
 
     std::string day_1_1 = "<not solved>";
@@ -94,43 +95,47 @@ int main() {
                 DrawPixelV(point.position, Fade(WHITE, point.opacity));
             }
 
-            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+            //GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+
+            GuiLine((Rectangle){ 10, 15, 460, 1 }, "DAY ONE");
 
             // DAY 1 ------------------------------------------------------------
             // ------------------------------------------------------------------
-            if (GuiButton((Rectangle){ btn1Left, btnMargin, btnWidth, btnHeight }, "Calculate Day 1 Puzzle 1")) {
+            if (GuiButton((Rectangle){ btn1Left, 30, btnWidth, btnHeight }, "Puzzle 1")) {
                 day_1_1 = "Ok let's do this...";
                 std::thread(day_one_one, std::ref(day_1_1)).detach();
             }
-            if (GuiTextBox((Rectangle){ btn1Left, 60, btnWidth, btnHeight }, day_1_1.data(), 64, textbox_1_1)) textbox_1_1 = !textbox_1_1;
+            if (GuiTextBox((Rectangle){ btn1Left, 66, btnWidth, btnHeight }, day_1_1.data(), 64, textbox_1_1)) textbox_1_1 = !textbox_1_1;
 
-            if (GuiButton((Rectangle){ btn2Left, btnMargin, btnWidth, btnHeight }, "Calculate Day 1 Puzzle 2")) {
+            if (GuiButton((Rectangle){ btn2Left, 30, btnWidth, btnHeight }, "Puzzle 2")) {
                 day_1_2 = "working on it...";
                 std::thread(day_one_two, std::ref(day_1_2)).detach();
             };
-            if (GuiTextBox((Rectangle){ btn2Left, 60, btnWidth, btnHeight }, day_1_2.data(), 64, textbox_1_2)) textbox_1_2 = !textbox_1_2;
+            if (GuiTextBox((Rectangle){ btn2Left, 66, btnWidth, btnHeight }, day_1_2.data(), 64, textbox_1_2)) textbox_1_2 = !textbox_1_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
+            GuiLine((Rectangle){ 10, 115, 460, 1 }, "DAY TWO");
 
             // DAY 2 ------------------------------------------------------------
             // ------------------------------------------------------------------
-            if (GuiButton((Rectangle){ btn1Left, btnMargin + 100, btnWidth, btnHeight }, "Calculate Day 2 Puzzle 1")) {
+            if (GuiButton((Rectangle){ btn1Left, 130, btnWidth, btnHeight }, "Puzzle 1")) {
                 day_2_1 = "let's see...";
                 std::thread(day_two_one, std::ref(day_2_1)).detach();
             }
-            if (GuiTextBox((Rectangle){ btn1Left, 160, btnWidth, btnHeight }, day_2_1.data(), 64, textbox_2_1)) textbox_2_1 = !textbox_2_1;
+            if (GuiTextBox((Rectangle){ btn1Left, 166, btnWidth, btnHeight }, day_2_1.data(), 64, textbox_2_1)) textbox_2_1 = !textbox_2_1;
 
-            if (GuiButton((Rectangle){ btn2Left, btnMargin + 100, btnWidth, btnHeight }, "Calculate Day 2 Puzzle 2")) {
+            if (GuiButton((Rectangle){ btn2Left, 130, btnWidth, btnHeight }, "Puzzle 2")) {
                 day_2_2 = "sifting through ranges...";
                 std::thread(day_two_two, std::ref(day_2_2)).detach();
             };
-            if (GuiTextBox((Rectangle){ btn2Left, 160, btnWidth, btnHeight }, day_2_2.data(), 64, textbox_2_2)) textbox_2_2 = !textbox_2_2;
+            if (GuiTextBox((Rectangle){ btn2Left, 166, btnWidth, btnHeight }, day_2_2.data(), 64, textbox_2_2)) textbox_2_2 = !textbox_2_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
             GuiGroupBox((Rectangle){ 10, 590, 220, 40 }, "LOG");
             GuiLabel((Rectangle){ 20, 590, 220, 40 }, globalLogString.data());
+            GuiCheckBox((Rectangle){ 240, 600, 20, 20 }, "use test data", &useTestData);
 
         EndDrawing();
     }
@@ -151,13 +156,15 @@ void stopStopwatch() {
 
 void day_one_one(std::string& resultString) {
 
+    startStopwatch();
     struct Movement {
         int steps;
         std::string direction;
     };
 
     const auto reader = Reader();
-    const auto linesStrings = reader.readFile("./src/inputs/1/input.txt");
+    const auto filename = useTestData ? "./src/inputs/1/test.txt" : "./src/inputs/1/input.txt";
+    const auto linesStrings = reader.readFile(filename);
 
     std::vector<Movement> movements;
 
@@ -191,17 +198,20 @@ void day_one_one(std::string& resultString) {
     };
 
     resultString = std::to_string(zeros);
+    stopStopwatch();
 }
 
 void day_one_two(std::string& resultString) {
 
+    startStopwatch();
     struct Movement {
         int steps;
         std::string direction;
     };
 
     const auto reader = Reader();
-    const auto linesStrings = reader.readFile("./src/inputs/1/input.txt");
+    const auto filename = useTestData ? "./src/inputs/1/test.txt" : "./src/inputs/1/input.txt";
+    const auto linesStrings = reader.readFile(filename);
 
     std::vector<Movement> movements;
 
@@ -257,9 +267,11 @@ void day_one_two(std::string& resultString) {
     };
 
     resultString = std::to_string(zeros);
+    stopStopwatch();
 }
 
 void day_two_one(std::string& resultString) {
+    startStopwatch();
     struct Range {
         int64_t min;
         int64_t max;
@@ -268,7 +280,8 @@ void day_two_one(std::string& resultString) {
     std::vector<int64_t> invalidIds;
 
     const auto reader = Reader();
-    const auto linesStrings = reader.readFile("./src/inputs/2/input.txt");
+    const auto filename = useTestData ? "./src/inputs/2/test.txt" : "./src/inputs/2/input.txt";
+    const auto linesStrings = reader.readFile(filename);
 
     std::vector<Range> ranges;
 
@@ -299,6 +312,8 @@ void day_two_one(std::string& resultString) {
     int64_t sum = std::reduce(invalidIds.begin(), invalidIds.end());
     std::string strSum = std::to_string(sum);
     resultString = strSum;
+
+    stopStopwatch();
 }
 
 void day_two_two(std::string& resultString) {
@@ -313,7 +328,8 @@ void day_two_two(std::string& resultString) {
     std::vector<int64_t> invalidIds;
 
     const auto reader = Reader();
-    const auto linesStrings = reader.readFile("./src/inputs/2/input.txt");
+    const auto filename = useTestData ? "./src/inputs/2/test.txt" : "./src/inputs/2/input.txt";
+    const auto linesStrings = reader.readFile(filename);
 
     std::vector<Range> ranges;
 
@@ -326,6 +342,7 @@ void day_two_two(std::string& resultString) {
         // look at one range
         for(int64_t i = r.min; i <= r.max; i++) {
             std::string s = std::to_string(i);
+            if(i < 11) continue;
             if(checkRepeatingPattern(s)) {
                 invalidIds.push_back(i);
             }
@@ -357,16 +374,16 @@ bool checkRepeatingPattern(std::string s) {
     // 9 = groups of 1, 3
     // 10 = groups of 1, 2, 5
 
-    // check every single char
-    // this check can be done on every string longer than 1
-    bool everySingleCharSame = true;
-    for(int i = 1; i < length; i++) {
-        if(s[i-1] != s[i]) {
-            everySingleCharSame = false;
-            break;
-        }
+
+    // check groups of 4 and 5
+    // can only happen on one occasion so lets leave out the loop
+    if(length == 8) {
+        if(s.substr(0,4) == s.substr(4, 4)) return true;
     }
-    if(everySingleCharSame) return true;
+
+    if(length == 10) {
+        if(s.substr(0,5) == s.substr(5, 5)) return true;
+    }
 
     // check groups of 2
     if(length == 4 || length == 6 || length == 8 || length == 10) {
@@ -374,6 +391,7 @@ bool checkRepeatingPattern(std::string s) {
         for(int i = 2; i < length; i+=2) {
             if(s.substr(i-2, 2) != s.substr(i, 2)) {
                 groupsOfTwoSame = false;
+                break;
             }
         }
         if(groupsOfTwoSame) return true;
@@ -385,20 +403,22 @@ bool checkRepeatingPattern(std::string s) {
         for(int i = 3; i < length; i+=3) {
             if(s.substr(i-3, 3) != s.substr(i, 3)) {
                 groupsOfThreeSame = false;
+                break;
             }
         }
         if(groupsOfThreeSame) return true;
     }
 
-    // check groups of 4 and 5
-    // can only happen on one occasion so lets leave out the loop
-    if(length == 8) {
-        if(s.substr(0,4) == s.substr(4, 4)) return true;
+    // check every single char
+    // this check can be done on every string longer than 1
+    bool everySingleCharSame = true;
+    for(int i = 1; i < length; i++) {
+        if(s[i-1] != s[i]) {
+            everySingleCharSame = false;
+            break;
+        }
     }
-
-    if(length == 10) {
-        if(s.substr(0,5) == s.substr(5, 5)) return true;
-    }
+    if(everySingleCharSame) return true;
 
     return false;
 }
