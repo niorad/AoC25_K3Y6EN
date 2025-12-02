@@ -3,6 +3,7 @@
 #include <string>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 #include "reader.h"
 
 #define RAYGUI_IMPLEMENTATION
@@ -13,6 +14,9 @@
 std::string day_one_one();
 std::string day_one_two();
 
+std::string day_two_one();
+std::string day_two_two();
+bool checkRepeatingPattern(std::string s);
 
 struct backgroundPoint {
     Vector2 position;
@@ -61,6 +65,11 @@ int main() {
     bool textbox_1_1 = false;
     bool textbox_1_2 = false;
 
+    std::string day_2_1 = "<not solved>";
+    std::string day_2_2 = "<not solved>";
+    bool textbox_2_1 = false;
+    bool textbox_2_2 = false;
+
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
     GuiLoadStyleCyber();
@@ -91,6 +100,21 @@ int main() {
                 day_1_2 = day_one_two();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 60, btnWidth, btnHeight }, day_1_2.data(), 64, textbox_1_2)) textbox_1_2 = !textbox_1_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
+
+            // DAY 2 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left, btnMargin + 100, btnWidth, btnHeight }, "Calculate Day 2 Puzzle 1")) {
+                day_2_1 = day_two_one();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left, 160, btnWidth, btnHeight }, day_2_1.data(), 64, textbox_2_1)) textbox_2_1 = !textbox_2_1;
+
+            if (GuiButton((Rectangle){ btn2Left, btnMargin + 100, btnWidth, btnHeight }, "Calculate Day 2 Puzzle 2")) {
+                day_2_2 = day_two_two();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left, 160, btnWidth, btnHeight }, day_2_2.data(), 64, textbox_2_2)) textbox_2_2 = !textbox_2_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
@@ -144,7 +168,6 @@ std::string day_one_one() {
 
     return std::to_string(zeros);
 }
-
 
 std::string day_one_two() {
 
@@ -210,4 +233,146 @@ std::string day_one_two() {
     };
 
     return std::to_string(zeros);
+}
+
+std::string day_two_one() {
+    struct Range {
+        int64_t min;
+        int64_t max;
+    };
+
+    std::vector<int64_t> invalidIds;
+
+    const auto reader = Reader();
+    const auto linesStrings = reader.readFile("./src/inputs/2/input.txt");
+
+    std::vector<Range> ranges;
+
+    for(int i = 0; i < linesStrings.size(); i+=2) {
+        auto r = Range{std::stoll(linesStrings[i]), std::stoll(linesStrings[i+1])};
+        ranges.push_back(r);
+    };
+
+    for(Range r : ranges) {
+        //  if both min and max are same-length and can't be split in the middle, there can be no invalid IDs
+        if(std::to_string(r.min).length() % 2 == 1 && std::to_string(r.min).length() == std::to_string(r.max).length()) {
+            continue;
+        }
+
+        // look at one range
+        for(int64_t i = r.min; i <= r.max; i++) {
+            std::string s = std::to_string(i);
+            if(s.length() % 2 == 0) {
+                auto half1 = s.substr(0, s.length() / 2);
+                auto half2 = s.substr(s.length() / 2);
+                if(half1 == half2) {
+                    invalidIds.push_back(i);
+                }
+            }
+        }
+    }
+
+    int64_t sum = std::reduce(invalidIds.begin(), invalidIds.end());
+    std::string strSum = std::to_string(sum);
+    return strSum;
+}
+
+std::string day_two_two() {
+
+    struct Range {
+        int64_t min;
+        int64_t max;
+    };
+
+    std::vector<int64_t> invalidIds;
+
+    const auto reader = Reader();
+    const auto linesStrings = reader.readFile("./src/inputs/2/input.txt");
+
+    std::vector<Range> ranges;
+
+    for(int i = 0; i < linesStrings.size(); i+=2) {
+        auto r = Range{std::stoll(linesStrings[i]), std::stoll(linesStrings[i+1])};
+        ranges.push_back(r);
+    };
+
+    for(Range r : ranges) {
+        // look at one range
+        for(int64_t i = r.min; i <= r.max; i++) {
+            std::string s = std::to_string(i);
+            if(checkRepeatingPattern(s)) {
+                std::cout << "Found: " << s << std::endl;
+                invalidIds.push_back(i);
+            }
+        }
+    }
+
+    //int64_t sum = std::reduce(invalidIds.begin(), invalidIds.end());
+    int64_t sum = 0;
+    for(int i = 0; i < invalidIds.size(); i++) {
+        sum += invalidIds[i];
+    }
+    std::string strSum = std::to_string(sum);
+    std::cout << "FINAL FINAL RESULTY " << strSum << std::endl;
+    return strSum;
+}
+
+// checks for repeating patterns in a string up to a length of ten
+bool checkRepeatingPattern(std::string s) {
+    auto length = s.length();
+
+    // length 1 can go fly a kite
+    if(length == 1) return false;
+
+    // lengths 2, 3, 5, 7 can only be invalid if every char is identical
+    // 4 = groups of 1 and 2
+    // 6 = groups of 1, 2, 3
+    // 8 = groups of 1, 2, 4
+    // 9 = groups of 1, 3
+    // 10 = groups of 1, 2, 5
+
+    // check every single char
+    // this check can be done on every string longer than 1
+    bool everySingleCharSame = true;
+    for(int i = 1; i < length; i++) {
+        if(s[i-1] != s[i]) {
+            everySingleCharSame = false;
+            break;
+        }
+    }
+    if(everySingleCharSame) return true;
+
+    // check groups of 2
+    if(length == 4 || length == 6 || length == 8 || length == 10) {
+        bool groupsOfTwoSame = true;
+        for(int i = 2; i < length; i+=2) {
+            if(s.substr(i-2, 2) != s.substr(i, 2)) {
+                groupsOfTwoSame = false;
+            }
+        }
+        if(groupsOfTwoSame) return true;
+    }
+
+    // check groups of 3
+    if(length == 6 || length == 9) {
+        bool groupsOfThreeSame = true;
+        for(int i = 3; i < length; i+=3) {
+            if(s.substr(i-3, 3) != s.substr(i, 3)) {
+                groupsOfThreeSame = false;
+            }
+        }
+        if(groupsOfThreeSame) return true;
+    }
+
+    // check groups of 4 and 5
+    // can only happen on one occasion so lets leave out the loop
+    if(length == 8) {
+        if(s.substr(0,4) == s.substr(4, 4)) return true;
+    }
+
+    if(length == 10) {
+        if(s.substr(0,5) == s.substr(5, 5)) return true;
+    }
+
+    return false;
 }
