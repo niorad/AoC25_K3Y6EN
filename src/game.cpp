@@ -4,6 +4,8 @@
 #include <cmath>
 #include <iostream>
 #include <numeric>
+#include <thread>
+#include <chrono>
 #include "reader.h"
 
 #define RAYGUI_IMPLEMENTATION
@@ -11,12 +13,17 @@
 #include <raygui.h>
 #include <style_cyber.h>
 
-std::string day_one_one();
-std::string day_one_two();
+void day_one_one(std::string& resultString);
+void day_one_two(std::string& resultString);
 
-std::string day_two_one();
-std::string day_two_two();
+void day_two_one(std::string& resultString);
+void day_two_two(std::string& resultString);
 bool checkRepeatingPattern(std::string s);
+
+auto globalTimerStart = std::chrono::high_resolution_clock::now();
+auto globalTimerStop = std::chrono::high_resolution_clock::now();
+std::string globalLogString = "2025 by ni0r4d";
+
 
 struct backgroundPoint {
     Vector2 position;
@@ -92,12 +99,14 @@ int main() {
             // DAY 1 ------------------------------------------------------------
             // ------------------------------------------------------------------
             if (GuiButton((Rectangle){ btn1Left, btnMargin, btnWidth, btnHeight }, "Calculate Day 1 Puzzle 1")) {
-                day_1_1 = day_one_one();
+                day_1_1 = "Ok let's do this...";
+                std::thread(day_one_one, std::ref(day_1_1)).detach();
             }
             if (GuiTextBox((Rectangle){ btn1Left, 60, btnWidth, btnHeight }, day_1_1.data(), 64, textbox_1_1)) textbox_1_1 = !textbox_1_1;
 
             if (GuiButton((Rectangle){ btn2Left, btnMargin, btnWidth, btnHeight }, "Calculate Day 1 Puzzle 2")) {
-                day_1_2 = day_one_two();
+                day_1_2 = "working on it...";
+                std::thread(day_one_two, std::ref(day_1_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 60, btnWidth, btnHeight }, day_1_2.data(), 64, textbox_1_2)) textbox_1_2 = !textbox_1_2;
             // ------------------------------------------------------------------
@@ -107,16 +116,21 @@ int main() {
             // DAY 2 ------------------------------------------------------------
             // ------------------------------------------------------------------
             if (GuiButton((Rectangle){ btn1Left, btnMargin + 100, btnWidth, btnHeight }, "Calculate Day 2 Puzzle 1")) {
-                day_2_1 = day_two_one();
+                day_2_1 = "let's see...";
+                std::thread(day_two_one, std::ref(day_2_1)).detach();
             }
             if (GuiTextBox((Rectangle){ btn1Left, 160, btnWidth, btnHeight }, day_2_1.data(), 64, textbox_2_1)) textbox_2_1 = !textbox_2_1;
 
             if (GuiButton((Rectangle){ btn2Left, btnMargin + 100, btnWidth, btnHeight }, "Calculate Day 2 Puzzle 2")) {
-                day_2_2 = day_two_two();
+                day_2_2 = "sifting through ranges...";
+                std::thread(day_two_two, std::ref(day_2_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 160, btnWidth, btnHeight }, day_2_2.data(), 64, textbox_2_2)) textbox_2_2 = !textbox_2_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
+
+            GuiGroupBox((Rectangle){ 10, 590, 220, 40 }, "LOG");
+            GuiLabel((Rectangle){ 20, 590, 220, 40 }, globalLogString.data());
 
         EndDrawing();
     }
@@ -125,7 +139,17 @@ int main() {
     return 0;
 }
 
-std::string day_one_one() {
+void startStopwatch() {
+    globalTimerStart = std::chrono::high_resolution_clock::now();
+}
+
+void stopStopwatch() {
+    globalTimerStop = std::chrono::high_resolution_clock::now();
+    auto timerResult = std::chrono::duration_cast<std::chrono::milliseconds>(globalTimerStop - globalTimerStart);
+    globalLogString = "Operation took " + std::to_string(timerResult.count()) + "ms";
+}
+
+void day_one_one(std::string& resultString) {
 
     struct Movement {
         int steps;
@@ -166,10 +190,10 @@ std::string day_one_one() {
         if(dial == 0) zeros++;
     };
 
-    return std::to_string(zeros);
+    resultString = std::to_string(zeros);
 }
 
-std::string day_one_two() {
+void day_one_two(std::string& resultString) {
 
     struct Movement {
         int steps;
@@ -232,10 +256,10 @@ std::string day_one_two() {
         if(dial == 100) dial = 0;
     };
 
-    return std::to_string(zeros);
+    resultString = std::to_string(zeros);
 }
 
-std::string day_two_one() {
+void day_two_one(std::string& resultString) {
     struct Range {
         int64_t min;
         int64_t max;
@@ -274,10 +298,12 @@ std::string day_two_one() {
 
     int64_t sum = std::reduce(invalidIds.begin(), invalidIds.end());
     std::string strSum = std::to_string(sum);
-    return strSum;
+    resultString = strSum;
 }
 
-std::string day_two_two() {
+void day_two_two(std::string& resultString) {
+
+    startStopwatch();
 
     struct Range {
         int64_t min;
@@ -301,7 +327,6 @@ std::string day_two_two() {
         for(int64_t i = r.min; i <= r.max; i++) {
             std::string s = std::to_string(i);
             if(checkRepeatingPattern(s)) {
-                std::cout << "Found: " << s << std::endl;
                 invalidIds.push_back(i);
             }
         }
@@ -313,8 +338,9 @@ std::string day_two_two() {
         sum += invalidIds[i];
     }
     std::string strSum = std::to_string(sum);
-    std::cout << "FINAL FINAL RESULTY " << strSum << std::endl;
-    return strSum;
+    resultString = strSum;
+
+    stopStopwatch();
 }
 
 // checks for repeating patterns in a string up to a length of ten
