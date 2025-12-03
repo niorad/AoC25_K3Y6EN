@@ -6,12 +6,17 @@
 #include <numeric>
 #include <thread>
 #include <chrono>
+#include <algorithm>
 #include "reader.h"
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
 #include <raygui.h>
 #include <style_cyber.h>
+
+// Definitions.. geez
+struct HighestListNumber;
+struct LowestListNumber;
 
 void day_one_one(std::string& resultString);
 void day_one_two(std::string& resultString);
@@ -20,24 +25,38 @@ void day_two_one(std::string& resultString);
 void day_two_two(std::string& resultString);
 bool checkRepeatingPattern(std::string s);
 
+void day_three_one(std::string& resultString);
+void day_three_two(std::string& resultString);
+HighestListNumber getHighestNumber(std::vector<int> v);
+LowestListNumber getLowestNumber(std::vector<int> v);
+// end of definitions.. geez
+
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
 auto globalTimerStop = std::chrono::high_resolution_clock::now();
 std::string globalLogString = "2025 by ni0r4d";
 bool useTestData = true;
 
+struct HighestListNumber {
+    int number;
+    int position;
+};
+struct LowestListNumber {
+    int number;
+    int position;
+};
 
-struct backgroundPoint {
+struct BackgroundPoint {
     Vector2 position;
     Color color;
     float opacity;
     float speed;
     float hspeed;
 };
-std::array<backgroundPoint, 500> backgroundPoints;
+std::array<BackgroundPoint, 500> backgroundPoints;
 
 // Let it snow let it snow let it snow
 void initializeBackgroundPoints() {
-    for(backgroundPoint& point : backgroundPoints) {
+    for(BackgroundPoint& point : backgroundPoints) {
         point.position = Vector2(GetRandomValue(-200, 640), GetRandomValue(0, 480));
         point.color = WHITE;
         point.opacity = (float)GetRandomValue(0,100) / 100;
@@ -47,7 +66,7 @@ void initializeBackgroundPoints() {
 }
 
 void updateBackgroundPoints() {
-    for(backgroundPoint& point : backgroundPoints) {
+    for(BackgroundPoint& point : backgroundPoints) {
         point.position.y += point.speed;
         point.position.x += point.hspeed;
         if(point.position.y > 640) {
@@ -78,26 +97,30 @@ int main() {
     bool textbox_2_1 = false;
     bool textbox_2_2 = false;
 
+    std::string day_3_1 = "<not solved>";
+    std::string day_3_2 = "<not solved>";
+    bool textbox_3_1 = false;
+    bool textbox_3_2 = false;
+
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
     GuiLoadStyleCyber();
 
     // Main game loop
     while (!WindowShouldClose()) {
-
-    updateBackgroundPoints();
+        updateBackgroundPoints();
 
         // Draw
         BeginDrawing();
             ClearBackground(BLACK);
 
-            for(backgroundPoint& point : backgroundPoints) {
+            for(BackgroundPoint& point : backgroundPoints) {
                 DrawPixelV(point.position, Fade(WHITE, point.opacity));
             }
 
             //GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
-            GuiLine((Rectangle){ 10, 15, 460, 1 }, "DAY ONE");
+            GuiLine((Rectangle){ 10, 15, 460, 1 }, "DAY ONE: DIALS");
 
             // DAY 1 ------------------------------------------------------------
             // ------------------------------------------------------------------
@@ -115,7 +138,7 @@ int main() {
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
-            GuiLine((Rectangle){ 10, 115, 460, 1 }, "DAY TWO");
+            GuiLine((Rectangle){ 10, 115, 460, 1 }, "DAY TWO: INVALID IDs #");
 
             // DAY 2 ------------------------------------------------------------
             // ------------------------------------------------------------------
@@ -130,6 +153,24 @@ int main() {
                 std::thread(day_two_two, std::ref(day_2_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 166, btnWidth, btnHeight }, day_2_2.data(), 64, textbox_2_2)) textbox_2_2 = !textbox_2_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
+            GuiLine((Rectangle){ 10, 215, 460, 1 }, "DAY THREE: JOLTAGE!");
+
+            // DAY 2 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left, 230, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_3_1 = "calcing the calc...";
+                std::thread(day_three_one, std::ref(day_3_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left, 266, btnWidth, btnHeight }, day_3_1.data(), 64, textbox_3_1)) textbox_3_1 = !textbox_3_1;
+
+            if (GuiButton((Rectangle){ btn2Left, 230, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_3_2 = "calcy mccalcface";
+                std::thread(day_three_two, std::ref(day_3_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left, 266, btnWidth, btnHeight }, day_3_2.data(), 64, textbox_3_2)) textbox_3_2 = !textbox_3_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
@@ -360,7 +401,95 @@ void day_two_two(std::string& resultString) {
     stopStopwatch();
 }
 
-// checks for repeating patterns in a string up to a length of ten
+void day_three_one(std::string& resultString) {
+    startStopwatch();
+    const auto reader = Reader();
+    const auto filename = useTestData ? "./src/inputs/3/test.txt" : "./src/inputs/3/input.txt";
+    const auto linesStrings = reader.readFile(filename);
+    int acc = 0;
+
+    for(std::string s : linesStrings) {
+
+        std::vector<char> lineAsCharVector = std::vector(s.begin(), s.end());
+        std::vector<int> lineAsIntVector;
+        auto length = s.length();
+        int leftNumber = 0;
+        int rightNumber = 0;
+
+        for(char c : lineAsCharVector) {
+            lineAsIntVector.push_back(atoi(&c));
+        }
+
+        HighestListNumber highestListNumber = getHighestNumber(lineAsIntVector);
+        bool highestNumberIsTheLast = length - 1 == highestListNumber.position;
+        bool highestNumberIsTheFirst = highestListNumber.position == 0;
+
+        if(!highestNumberIsTheLast) {
+            // the second highest number is somewhere to the right of the highest
+            leftNumber = highestListNumber.number;
+            std::vector<int> restOfLineAsIntVector(lineAsIntVector.begin() + highestListNumber.position + 1, lineAsIntVector.end());
+            HighestListNumber highestRestOfListNumber = getHighestNumber(restOfLineAsIntVector);
+            rightNumber = highestRestOfListNumber.number;
+        } else {
+            // the highest number has to act as ones, we're checking the list to the left
+            rightNumber = highestListNumber.number;
+            std::vector<int> restOfLineAsIntVector(lineAsIntVector.begin(), lineAsIntVector.begin() + highestListNumber.position);
+            HighestListNumber highestRestOfListNumber = getHighestNumber(restOfLineAsIntVector);
+            leftNumber = highestRestOfListNumber.number;
+        }
+
+        int solution = leftNumber * 10 + rightNumber;
+        acc += solution;
+    }
+
+    resultString = std::to_string(acc);
+    stopStopwatch();
+}
+
+void day_three_two(std::string& resultString) {
+
+    startStopwatch();
+    const auto reader = Reader();
+    const auto filename = useTestData ? "./src/inputs/3/test.txt" : "./src/inputs/3/input.txt";
+    const auto linesStrings = reader.readFile(filename);
+    uint64_t acc = 0;
+    int maxLength = 12;
+
+    for(std::string s : linesStrings) {
+
+        std::vector<char> lineAsCharVector = std::vector(s.begin(), s.end());
+        std::vector<int> lineAsIntVector;
+        std::vector<int> solutionVector;
+        uint64_t solution = 0;
+        auto length = s.length();
+
+        for(char c : lineAsCharVector) {
+            lineAsIntVector.push_back(atoi(&c));
+        }
+
+        int currentLeftBorder = 0;
+        for(int i = 11; i >= 0; i--) {
+            std::vector<int> legalList(lineAsIntVector.begin() + currentLeftBorder, lineAsIntVector.end() - i);
+            HighestListNumber h = getHighestNumber(legalList);
+            solutionVector.push_back(h.number);
+            currentLeftBorder += h.position + 1;
+        }
+
+        for(auto num : solutionVector) {
+            solution = solution * 10 + num;
+        }
+
+        acc += solution;
+    }
+
+    resultString = std::to_string(acc);
+    stopStopwatch();
+}
+
+
+// UTILITIES
+
+// Used for 2_2, checks for repeating patterns in a string up to a length of ten
 bool checkRepeatingPattern(std::string s) {
     auto length = s.length();
 
@@ -421,4 +550,13 @@ bool checkRepeatingPattern(std::string s) {
     if(everySingleCharSame) return true;
 
     return false;
+}
+
+// Used for 3_1, get the highest int from a vector of ints, returns position and the int that is hightest
+// Returns Vector2 {number, position}
+HighestListNumber getHighestNumber(std::vector<int> v) {
+    auto result = std::max_element(v.begin(), v.end());
+    auto index = std::distance(v.begin(), result);
+    auto number = *result;
+    return HighestListNumber{number, (int)index};
 }
