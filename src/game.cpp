@@ -25,10 +25,8 @@ void day_two_one(std::string& resultString);
 void day_two_two(std::string& resultString);
 bool checkRepeatingPattern(std::string s);
 
-void day_three_one(std::string& resultString);
-void day_three_two(std::string& resultString);
+void day_three(std::string& resultString, int part);
 HighestListNumber getHighestNumber(std::vector<int> v);
-LowestListNumber getLowestNumber(std::vector<int> v);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -37,10 +35,6 @@ std::string globalLogString = "2025 by ni0r4d";
 bool useTestData = true;
 
 struct HighestListNumber {
-    int number;
-    int position;
-};
-struct LowestListNumber {
     int number;
     int position;
 };
@@ -162,13 +156,13 @@ int main() {
             // ------------------------------------------------------------------
             if (GuiButton((Rectangle){ btn1Left, 230, btnWidth, btnHeight }, "Puzzle 1")) {
                 day_3_1 = "calcing the calc...";
-                std::thread(day_three_one, std::ref(day_3_1)).detach();
+                std::thread(day_three, std::ref(day_3_1), 1).detach();
             }
             if (GuiTextBox((Rectangle){ btn1Left, 266, btnWidth, btnHeight }, day_3_1.data(), 64, textbox_3_1)) textbox_3_1 = !textbox_3_1;
 
             if (GuiButton((Rectangle){ btn2Left, 230, btnWidth, btnHeight }, "Puzzle 2")) {
                 day_3_2 = "calcy mccalcface";
-                std::thread(day_three_two, std::ref(day_3_2)).detach();
+                std::thread(day_three, std::ref(day_3_2), 2).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 266, btnWidth, btnHeight }, day_3_2.data(), 64, textbox_3_2)) textbox_3_2 = !textbox_3_2;
             // ------------------------------------------------------------------
@@ -401,59 +395,14 @@ void day_two_two(std::string& resultString) {
     stopStopwatch();
 }
 
-void day_three_one(std::string& resultString) {
-    startStopwatch();
-    const auto reader = Reader();
-    const auto filename = useTestData ? "./src/inputs/3/test.txt" : "./src/inputs/3/input.txt";
-    const auto linesStrings = reader.readFile(filename);
-    int acc = 0;
-
-    for(std::string s : linesStrings) {
-
-        std::vector<char> lineAsCharVector = std::vector(s.begin(), s.end());
-        std::vector<int> lineAsIntVector;
-        auto length = s.length();
-        int leftNumber = 0;
-        int rightNumber = 0;
-
-        for(char c : lineAsCharVector) {
-            lineAsIntVector.push_back(atoi(&c));
-        }
-
-        HighestListNumber highestListNumber = getHighestNumber(lineAsIntVector);
-        bool highestNumberIsTheLast = length - 1 == highestListNumber.position;
-        bool highestNumberIsTheFirst = highestListNumber.position == 0;
-
-        if(!highestNumberIsTheLast) {
-            // the second highest number is somewhere to the right of the highest
-            leftNumber = highestListNumber.number;
-            std::vector<int> restOfLineAsIntVector(lineAsIntVector.begin() + highestListNumber.position + 1, lineAsIntVector.end());
-            HighestListNumber highestRestOfListNumber = getHighestNumber(restOfLineAsIntVector);
-            rightNumber = highestRestOfListNumber.number;
-        } else {
-            // the highest number has to act as ones, we're checking the list to the left
-            rightNumber = highestListNumber.number;
-            std::vector<int> restOfLineAsIntVector(lineAsIntVector.begin(), lineAsIntVector.begin() + highestListNumber.position);
-            HighestListNumber highestRestOfListNumber = getHighestNumber(restOfLineAsIntVector);
-            leftNumber = highestRestOfListNumber.number;
-        }
-
-        int solution = leftNumber * 10 + rightNumber;
-        acc += solution;
-    }
-
-    resultString = std::to_string(acc);
-    stopStopwatch();
-}
-
-void day_three_two(std::string& resultString) {
+void day_three(std::string& resultString, int part) {
 
     startStopwatch();
     const auto reader = Reader();
     const auto filename = useTestData ? "./src/inputs/3/test.txt" : "./src/inputs/3/input.txt";
     const auto linesStrings = reader.readFile(filename);
     uint64_t acc = 0;
-    int maxLength = 12;
+    int maxLength = part == 1 ? 2 : 11;
 
     for(std::string s : linesStrings) {
 
@@ -468,7 +417,7 @@ void day_three_two(std::string& resultString) {
         }
 
         int currentLeftBorder = 0;
-        for(int i = 11; i >= 0; i--) {
+        for(int i = maxLength - 1; i >= 0; i--) {
             std::vector<int> legalList(lineAsIntVector.begin() + currentLeftBorder, lineAsIntVector.end() - i);
             HighestListNumber h = getHighestNumber(legalList);
             solutionVector.push_back(h.number);
