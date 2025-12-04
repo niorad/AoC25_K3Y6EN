@@ -16,17 +16,20 @@
 
 // Definitions.. geez
 struct HighestListNumber;
-struct LowestListNumber;
 
 void day_one_one(std::string& resultString);
 void day_one_two(std::string& resultString);
 
 void day_two_one(std::string& resultString);
 void day_two_two(std::string& resultString);
-bool checkRepeatingPattern(std::string s);
+bool checkRepeatingPattern(std::string &s);
 
 void day_three(std::string& resultString, int part);
 HighestListNumber getHighestNumber(std::vector<int> v);
+
+void day_four_one(std::string& resultString);
+void day_four_two(std::string& resultString);
+int getNeighborCount(int col, int row, std::vector<std::vector<int>> &board);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -46,7 +49,7 @@ struct BackgroundPoint {
     float speed;
     float hspeed;
 };
-std::array<BackgroundPoint, 500> backgroundPoints;
+std::array<BackgroundPoint, 1500> backgroundPoints;
 
 // Let it snow let it snow let it snow
 void initializeBackgroundPoints() {
@@ -95,6 +98,11 @@ int main() {
     std::string day_3_2 = "<not solved>";
     bool textbox_3_1 = false;
     bool textbox_3_2 = false;
+
+    std::string day_4_1 = "<not solved>";
+    std::string day_4_2 = "<not solved>";
+    bool textbox_4_1 = false;
+    bool textbox_4_2 = false;
 
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
@@ -152,7 +160,7 @@ int main() {
 
             GuiLine((Rectangle){ 10, 215, 460, 1 }, "DAY THREE: JOLTAGE!");
 
-            // DAY 2 ------------------------------------------------------------
+            // DAY 3 ------------------------------------------------------------
             // ------------------------------------------------------------------
             if (GuiButton((Rectangle){ btn1Left, 230, btnWidth, btnHeight }, "Puzzle 1")) {
                 day_3_1 = "calcing the calc...";
@@ -167,6 +175,25 @@ int main() {
             if (GuiTextBox((Rectangle){ btn2Left, 266, btnWidth, btnHeight }, day_3_2.data(), 64, textbox_3_2)) textbox_3_2 = !textbox_3_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
+
+            GuiLine((Rectangle){ 10, 315, 460, 1 }, "DAY FOUR: PAPER ROLLZ");
+
+            // DAY 4 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left, 330, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_4_1 = "calcing the calc...";
+                std::thread(day_four_one, std::ref(day_4_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left, 366, btnWidth, btnHeight }, day_4_1.data(), 64, textbox_4_1)) textbox_4_1 = !textbox_4_1;
+
+            if (GuiButton((Rectangle){ btn2Left, 330, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_4_2 = "calcy mccalcface";
+                std::thread(day_four_two, std::ref(day_4_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left, 366, btnWidth, btnHeight }, day_4_2.data(), 64, textbox_4_2)) textbox_4_2 = !textbox_4_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
 
             GuiGroupBox((Rectangle){ 10, 590, 220, 40 }, "LOG");
             GuiLabel((Rectangle){ 20, 590, 220, 40 }, globalLogString.data());
@@ -359,9 +386,7 @@ void day_two_two(std::string& resultString) {
         int64_t min;
         int64_t max;
     };
-
     std::vector<int64_t> invalidIds;
-
     const auto reader = Reader();
     const auto filename = useTestData ? "./src/inputs/2/test.txt" : "./src/inputs/2/input.txt";
     const auto linesStrings = reader.readFile(filename);
@@ -435,11 +460,86 @@ void day_three(std::string& resultString, int part) {
     stopStopwatch();
 }
 
+void day_four_one(std::string& resultString) {
+
+    startStopwatch();
+    const auto reader = Reader();
+    const auto filename = useTestData ? "./src/inputs/4/test.txt" : "./src/inputs/4/input.txt";
+    const auto linesStrings = reader.readFile(filename);
+    std::vector<std::vector<int>> board;
+
+    for(auto line : linesStrings) {
+        std::vector<int> row;
+        for(auto symbol : line) {
+            if(symbol == '.') row.push_back(0);
+            if(symbol == '@') row.push_back(1);
+        }
+        board.push_back(row);
+    }
+
+    int rowCount = board.size();
+    int colCount = board[0].size();
+    int accessibleRolls = 0;
+
+    for(int y = 0; y < rowCount; y++) {
+        for(int x = 0; x < colCount; x++) {
+            if(board[y][x] == 0) continue;
+            if(getNeighborCount(x, y, board) < 4) {
+                accessibleRolls++;
+            }
+        }
+    }
+
+    resultString = std::to_string(accessibleRolls);
+    stopStopwatch();
+}
+
+void day_four_two(std::string& resultString) {
+
+
+    startStopwatch();
+    const auto reader = Reader();
+    const auto filename = useTestData ? "./src/inputs/4/test.txt" : "./src/inputs/4/input.txt";
+    const auto linesStrings = reader.readFile(filename);
+    std::vector<std::vector<int>> board;
+
+
+    for(auto line : linesStrings) {
+        std::vector<int> row;
+        for(auto symbol : line) {
+            if(symbol == '.') row.push_back(0);
+            if(symbol == '@') row.push_back(1);
+        }
+        board.push_back(row);
+    }
+
+    int rowCount = board.size();
+    int colCount = board[0].size();
+    int removedRolls = 0;
+
+    for(;;) {
+        int removedThisRound = 0;
+        for(int y = 0; y < rowCount; y++) {
+            for(int x = 0; x < colCount; x++) {
+                if(board[y][x] == 0) continue;
+                if(getNeighborCount(x, y, board) < 4) {
+                    board[y][x] = 0;
+                    removedRolls++;
+                    removedThisRound++;
+                }
+            }
+        }
+        if(removedThisRound == 0) break;
+    }
+
+    resultString = std::to_string(removedRolls);
+    stopStopwatch();
+}
 
 // UTILITIES
 
 // Used for 2_2, checks for repeating patterns in a string up to a length of ten
-bool checkRepeatingPattern(std::string s) {
+bool checkRepeatingPattern(std::string &s) {
     auto length = s.length();
 
     // length 1 can go fly a kite
@@ -508,4 +608,22 @@ HighestListNumber getHighestNumber(std::vector<int> v) {
     auto index = std::distance(v.begin(), result);
     auto number = *result;
     return HighestListNumber{number, (int)index};
+}
+
+// Used for Day 4, get the count of adjacent objects. 1 is object, 0 is free
+int getNeighborCount(int col, int row, std::vector<std::vector<int>> &board) {
+    int rowCount = board.size();
+    int colCount = board[0].size();
+    int neighborCount = 0;
+
+    if(row > 0)                                     neighborCount += board[row-1][col];
+    if(row > 0 && col < colCount-1)                 neighborCount += board[row-1][col+1];
+    if(col < colCount - 1)                          neighborCount += board[row][col+1];
+    if(row < rowCount - 1 && col < colCount - 1)    neighborCount += board[row+1][col+1];
+    if(row < rowCount - 1)                          neighborCount += board[row+1][col];
+    if(row < rowCount - 1 && col > 0)               neighborCount += board[row+1][col-1];
+    if(col > 0)                                     neighborCount += board[row][col-1];
+    if(row > 0 && col > 0)                          neighborCount += board[row-1][col-1];
+
+    return neighborCount;
 }
