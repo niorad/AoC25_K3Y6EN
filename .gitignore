@@ -7,3 +7,5 @@ lib/rlgl.h
 .DS_Store
 release_macos
 input.txt
+src/inputs/5/input1.txt
+src/inputs/5/input2.txt

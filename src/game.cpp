@@ -16,6 +16,7 @@
 
 // Definitions.. geez
 struct HighestListNumber;
+struct FromTo64;
 
 void day_one_one(std::string& resultString);
 void day_one_two(std::string& resultString);
@@ -30,6 +31,11 @@ HighestListNumber getHighestNumber(std::vector<int> v);
 void day_four_one(std::string& resultString);
 void day_four_two(std::string& resultString);
 int getNeighborCount(int col, int row, std::vector<std::vector<int>> &board);
+
+void day_five_one(std::string& resultString);
+void day_five_two(std::string& resultString);
+bool compareByFromValue(const FromTo64 &a, const FromTo64 &b);
+void mergeRanges(std::vector<FromTo64> &ranges);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -40,6 +46,11 @@ bool useTestData = true;
 struct HighestListNumber {
     int number;
     int position;
+};
+
+struct FromTo64 {
+    int64_t from;
+    int64_t to;
 };
 
 struct BackgroundPoint {
@@ -103,6 +114,11 @@ int main() {
     std::string day_4_2 = "<not solved>";
     bool textbox_4_1 = false;
     bool textbox_4_2 = false;
+
+    std::string day_5_1 = "<not solved>";
+    std::string day_5_2 = "<not solved>";
+    bool textbox_5_1 = false;
+    bool textbox_5_2 = false;
 
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
@@ -181,19 +197,36 @@ int main() {
             // DAY 4 ------------------------------------------------------------
             // ------------------------------------------------------------------
             if (GuiButton((Rectangle){ btn1Left, 330, btnWidth, btnHeight }, "Puzzle 1")) {
-                day_4_1 = "calcing the calc...";
+                day_4_1 = "looking for rolls...";
                 std::thread(day_four_one, std::ref(day_4_1)).detach();
             }
             if (GuiTextBox((Rectangle){ btn1Left, 366, btnWidth, btnHeight }, day_4_1.data(), 64, textbox_4_1)) textbox_4_1 = !textbox_4_1;
 
             if (GuiButton((Rectangle){ btn2Left, 330, btnWidth, btnHeight }, "Puzzle 2")) {
-                day_4_2 = "calcy mccalcface";
+                day_4_2 = "looking for more rolls...";
                 std::thread(day_four_two, std::ref(day_4_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 366, btnWidth, btnHeight }, day_4_2.data(), 64, textbox_4_2)) textbox_4_2 = !textbox_4_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
+            GuiLine((Rectangle){ 10, 415, 460, 1 }, "DAY FIVE: INGREDIENTS!");
+
+            // DAY 5 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left, 430, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_5_1 = "Counting Fresh Ingredients..";
+                std::thread(day_five_one, std::ref(day_5_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left, 466, btnWidth, btnHeight }, day_5_1.data(), 64, textbox_5_1)) textbox_5_1 = !textbox_5_1;
+
+            if (GuiButton((Rectangle){ btn2Left, 430, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_5_2 = "Counting Fresh Ingredients..";
+                std::thread(day_five_two, std::ref(day_5_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left, 466, btnWidth, btnHeight }, day_5_2.data(), 64, textbox_5_2)) textbox_5_2 = !textbox_5_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
 
             GuiGroupBox((Rectangle){ 10, 590, 220, 40 }, "LOG");
             GuiLabel((Rectangle){ 20, 590, 220, 40 }, globalLogString.data());
@@ -536,6 +569,77 @@ void day_four_two(std::string& resultString) {
     stopStopwatch();
 }
 
+void day_five_one(std::string &resultString) {
+
+    startStopwatch();
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/5/test1.txt" : "./src/inputs/5/input1.txt";
+    const auto file2name = useTestData ? "./src/inputs/5/test2.txt" : "./src/inputs/5/input2.txt";
+    const auto rangesStrings = reader.readFile(file1name);
+    const auto ingredientsStrings = reader.readFile(file2name);
+
+    std::vector<FromTo64> ranges;
+
+    for(std::string s : rangesStrings) {
+        auto delimPos = s.find_first_of('-');
+        std::string fromStr = s.substr(0, delimPos);
+        std::string toStr = s.substr(delimPos + 1, s.length());
+        int64_t fromInt = strtoll(fromStr.data(), NULL, 10);
+        int64_t toInt = strtoll(toStr.data(), NULL, 10);
+        FromTo64 r = {fromInt, toInt};
+        ranges.push_back(r);
+    }
+
+    int solution = 0;
+    for(auto s : ingredientsStrings) {
+        int64_t ingredient = strtoll(s.data(), NULL, 10);
+        for(auto r : ranges) {
+            if(ingredient >= r.from && ingredient <= r.to) {
+                solution++;
+                break;
+            }
+        }
+    }
+
+    resultString = std::to_string(solution);
+    stopStopwatch();
+}
+
+void day_five_two(std::string &resultString) {
+
+    startStopwatch();
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/5/test1.txt" : "./src/inputs/5/input1.txt";
+    const auto file2name = useTestData ? "./src/inputs/5/test2.txt" : "./src/inputs/5/input2.txt";
+    const auto rangesStrings = reader.readFile(file1name);
+    const auto ingredientsStrings = reader.readFile(file2name);
+
+    std::vector<FromTo64> ranges;
+
+    for(std::string s : rangesStrings) {
+        auto delimPos = s.find_first_of('-');
+        std::string fromStr = s.substr(0, delimPos);
+        std::string toStr = s.substr(delimPos + 1, s.length());
+        int64_t fromInt = strtoll(fromStr.data(), NULL, 10);
+        int64_t toInt = strtoll(toStr.data(), NULL, 10);
+        FromTo64 r = {fromInt, toInt};
+        ranges.push_back(r);
+    }
+
+    mergeRanges(ranges);
+
+    int64_t solution = 0;
+    for(auto r : ranges) {
+        solution += r.to - r.from;
+        // for each range we're adding one due to inclusion or something
+        solution++;
+    }
+
+    resultString = std::to_string(solution);
+    stopStopwatch();
+}
+
+
 // UTILITIES
 
 // Used for 2_2, checks for repeating patterns in a string up to a length of ten
@@ -626,4 +730,34 @@ int getNeighborCount(int col, int row, std::vector<std::vector<int>> &board) {
     if(row > 0 && col > 0)                          neighborCount += board[row-1][col-1];
 
     return neighborCount;
+}
+
+// Used for Day 5 to merge ranges, passing by Reference, edits in place
+void mergeRanges(std::vector<FromTo64> &ranges) {
+
+    // sort ranges by from-value
+    std::sort(ranges.begin(), ranges.end(), compareByFromValue);
+
+    // check if range[i].to < range[i+1].from and range[i].to < range[i+1].to, if yes then range[i].to = range[i+1].to.
+    for(int i = 1; i < ranges.size(); i++) {
+        // no overlap, continue!
+        if(ranges[i].from > ranges[i-1].to) continue;
+
+        // if there is an overlap, we're throwing away the old range, and constructing a new range with whatever is smaller/larger
+        if(ranges[i].from <= ranges[i-1].to) {
+
+            ranges[i].from = std::min(ranges[i].from, ranges[i-1].from);
+            ranges[i].to = std::max(ranges[i].to, ranges[i-1].to);
+
+            ranges.erase(ranges.begin() + (i-1));
+            //since one list-item is gone, I need to go back one item
+            i--;
+            continue;
+        }
+    }
+
+}
+
+bool compareByFromValue(const FromTo64 &a, const FromTo64 &b) {
+    return a.from < b.from;
 }
