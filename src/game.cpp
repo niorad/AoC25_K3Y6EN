@@ -7,12 +7,14 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include <locale>
 #include "reader.h"
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
 #include <raygui.h>
 #include <style_cyber.h>
+
 
 // Definitions.. geez
 struct HighestListNumber;
@@ -245,8 +247,8 @@ void startStopwatch() {
 
 void stopStopwatch() {
     globalTimerStop = std::chrono::high_resolution_clock::now();
-    auto timerResult = std::chrono::duration_cast<std::chrono::milliseconds>(globalTimerStop - globalTimerStart);
-    globalLogString = "Operation took " + std::to_string(timerResult.count()) + "ms";
+    auto timerResult = std::chrono::duration_cast<std::chrono::nanoseconds>(globalTimerStop - globalTimerStart);
+    globalLogString = "Took " + std::to_string(timerResult.count()) + "ns";
 }
 
 void day_one_one(std::string& resultString) {
@@ -589,6 +591,8 @@ void day_five_one(std::string &resultString) {
         FromTo64 r = {fromInt, toInt};
         ranges.push_back(r);
     }
+
+    mergeRanges(ranges);
 
     int solution = 0;
     for(auto s : ingredientsStrings) {
