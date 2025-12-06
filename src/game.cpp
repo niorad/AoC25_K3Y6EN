@@ -38,6 +38,9 @@ void day_five_one(std::string& resultString);
 void day_five_two(std::string& resultString);
 bool compareByFromValue(const FromTo64 &a, const FromTo64 &b);
 void mergeRanges(std::vector<FromTo64> &ranges);
+
+void day_six_one(std::string& resultString);
+void day_six_two(std::string& resultString);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -89,7 +92,7 @@ void updateBackgroundPoints() {
 int main() {
 
     int screenWidth = 480;
-    int screenHeight = 640;
+    int screenHeight = 800;
     float btnMargin = 10;
     float btn1Left = btnMargin;
     float btn2Left = 245;
@@ -121,6 +124,11 @@ int main() {
     std::string day_5_2 = "<not solved>";
     bool textbox_5_1 = false;
     bool textbox_5_2 = false;
+
+    std::string day_6_1 = "<not solved>";
+    std::string day_6_2 = "<not solved>";
+    bool textbox_6_1 = false;
+    bool textbox_6_2 = false;
 
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
@@ -230,9 +238,27 @@ int main() {
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
-            GuiGroupBox((Rectangle){ 10, 590, 220, 40 }, "LOG");
-            GuiLabel((Rectangle){ 20, 590, 220, 40 }, globalLogString.data());
-            GuiCheckBox((Rectangle){ 240, 600, 20, 20 }, "use test data", &useTestData);
+             GuiLine((Rectangle){ 10, 515, 460, 1 }, "DAY SIX");
+
+            // DAY 6 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left, 530, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_6_1 = "..";
+                std::thread(day_six_one, std::ref(day_6_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left, 566, btnWidth, btnHeight }, day_6_1.data(), 64, textbox_6_1)) textbox_6_1 = !textbox_6_1;
+
+            if (GuiButton((Rectangle){ btn2Left, 530, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_6_2 = "..";
+                std::thread(day_six_two, std::ref(day_6_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left, 566, btnWidth, btnHeight }, day_6_2.data(), 64, textbox_6_2)) textbox_6_2 = !textbox_6_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
+            GuiGroupBox((Rectangle){ 10, 690, 220, 40 }, "LOG");
+            GuiLabel((Rectangle){ 20, 690, 220, 40 }, globalLogString.data());
+            GuiCheckBox((Rectangle){ 240, 700, 20, 20 }, "use test data", &useTestData);
 
         EndDrawing();
     }
@@ -641,6 +667,42 @@ void day_five_two(std::string &resultString) {
 
     resultString = std::to_string(solution);
     stopStopwatch();
+}
+
+
+void day_six_one(std::string &resultString) {
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/6/test.txt" : "./src/inputs/6/input.txt";
+    const auto numbersLinesStrings = reader.readFile(file1name);
+
+    int operandsLine = useTestData ? 3 : 4;
+    std::vector<std::vector<int>> numbersLines;
+    std::vector<std::string> operandsList;
+
+    std::stringstream ss1(numbersLinesStrings[operandsLine]);
+    std::string operandAsString;
+    while(ss1 >> operandAsString) {
+        operandsList.push_back(operandAsString);
+    }
+
+    for(int i = 0; i < operandsLine; i++) {
+        std::stringstream ss2(numbersLinesStrings[i]);
+        std::string numAsString;
+        std::vector<int> lineAsInts;
+        while (ss2 >> numAsString) {
+            int numAsInt = stoi(numAsString);
+            lineAsInts.push_back(numAsInt);
+        };
+        numbersLines.push_back(lineAsInts);
+    };
+
+    stopStopwatch();
+}
+
+void day_six_two(std::string &resultString) {
+
 }
 
 
