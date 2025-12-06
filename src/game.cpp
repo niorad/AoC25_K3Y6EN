@@ -698,6 +698,22 @@ void day_six_one(std::string &resultString) {
         numbersLines.push_back(lineAsInts);
     };
 
+    int64_t solution = 0;
+
+    for(int i = 0; i < operandsList.size(); i++) {
+        int64_t acc = numbersLines[0][i];
+        for(int j = 1; j < operandsLine; j++) {
+            if(operandsList[i] == "*") {
+                acc *= numbersLines[j][i];
+            } else {
+                acc += numbersLines[j][i];
+            }
+        }
+        solution += acc;
+    }
+
+    resultString = std::to_string(solution);
+
     stopStopwatch();
 }
 
