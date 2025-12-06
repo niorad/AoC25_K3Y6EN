@@ -677,7 +677,7 @@ void day_six_one(std::string &resultString) {
     const auto file1name = useTestData ? "./src/inputs/6/test.txt" : "./src/inputs/6/input.txt";
     const auto numbersLinesStrings = reader.readFile(file1name);
 
-    int operandsLine = useTestData ? 3 : 4;
+    int operandsLine = 4;
     std::vector<std::vector<int>> numbersLines;
     std::vector<std::string> operandsList;
 
@@ -718,6 +718,62 @@ void day_six_one(std::string &resultString) {
 }
 
 void day_six_two(std::string &resultString) {
+
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/6/test.txt" : "./src/inputs/6/input.txt";
+    const auto numbersLinesStrings = reader.readFile(file1name);
+
+    std::string operandsList = numbersLinesStrings[4];
+
+    int64_t blockResult = 0;
+    std::vector<std::string> blockNumbersStrings;
+    std::string currentOperand;
+    int64_t solution = 0;
+
+    // i is also the X-value, or the column-cursor
+    // we are going LEFT TO RIGHT since it DOESNT MATTER FOR + AND * HAHAHAHAHAH
+    for(int i = 0; i < operandsList.size(); i++) {
+
+        // this is a new operand! a new life begins, milk and honey and such.
+        if(operandsList[i] != ' ') {
+            currentOperand = operandsList[i];
+        }
+
+        std::string numberStringFromCol = "";
+
+        if(numbersLinesStrings[0][i] != ' ') {
+            numberStringFromCol += numbersLinesStrings[0][i];
+        }
+        if(numbersLinesStrings[1][i] != ' ') {
+            numberStringFromCol += numbersLinesStrings[1][i];
+        }
+        if(numbersLinesStrings[2][i] != ' ') {
+            numberStringFromCol += numbersLinesStrings[2][i];
+        }
+        if(numbersLinesStrings[3][i] != ' ') {
+            numberStringFromCol += numbersLinesStrings[3][i];
+        }
+
+        if(numberStringFromCol == "") {
+
+            int64_t acc = (currentOperand == "+") ? 0 : 1;
+            for(int j = 0; j < blockNumbersStrings.size(); j++) {
+                int64_t num = std::stoi(blockNumbersStrings[j]);
+                if(currentOperand == "+") acc += num;
+                if(currentOperand == "*") acc *= num;
+            }
+
+            solution += acc;
+            blockNumbersStrings.clear();
+        } else {
+            blockNumbersStrings.push_back(numberStringFromCol);
+        }
+    }
+
+    resultString = std::to_string(solution);
+    stopStopwatch();
 
 }
 
