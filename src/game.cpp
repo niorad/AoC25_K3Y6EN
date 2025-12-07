@@ -41,6 +41,9 @@ void mergeRanges(std::vector<FromTo64> &ranges);
 
 void day_six_one(std::string& resultString);
 void day_six_two(std::string& resultString);
+
+void day_seven_one(std::string& resultString);
+void day_seven_two(std::string& resultString);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -65,12 +68,12 @@ struct BackgroundPoint {
     float speed;
     float hspeed;
 };
-std::array<BackgroundPoint, 1500> backgroundPoints;
+std::array<BackgroundPoint, 2500> backgroundPoints;
 
 // Let it snow let it snow let it snow
 void initializeBackgroundPoints() {
     for(BackgroundPoint& point : backgroundPoints) {
-        point.position = Vector2(GetRandomValue(-200, 640), GetRandomValue(0, 480));
+        point.position = Vector2(GetRandomValue(-200, 960), GetRandomValue(0, 800));
         point.color = WHITE;
         point.opacity = (float)GetRandomValue(0,100) / 100;
         point.speed = point.opacity;
@@ -82,17 +85,18 @@ void updateBackgroundPoints() {
     for(BackgroundPoint& point : backgroundPoints) {
         point.position.y += point.speed;
         point.position.x += point.hspeed;
-        if(point.position.y > 640) {
+        if(point.position.y > 800) {
             point.position.y = 0;
-            point.position.x = GetRandomValue(-200, 640);
+            point.position.x = GetRandomValue(-200, 960);
         }
     }
 }
 
 int main() {
 
-    int screenWidth = 480;
+    int screenWidth = 960;
     int screenHeight = 800;
+    float halfScreenWidth = screenWidth / 2;
     float btnMargin = 10;
     float btn1Left = btnMargin;
     float btn2Left = 245;
@@ -129,6 +133,11 @@ int main() {
     std::string day_6_2 = "<not solved>";
     bool textbox_6_1 = false;
     bool textbox_6_2 = false;
+
+    std::string day_7_1 = "<not solved>";
+    std::string day_7_2 = "<not solved>";
+    bool textbox_7_1 = false;
+    bool textbox_7_2 = false;
 
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
@@ -238,7 +247,7 @@ int main() {
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
-             GuiLine((Rectangle){ 10, 515, 460, 1 }, "DAY SIX");
+             GuiLine((Rectangle){ 10, 515, 460, 1 }, "DAY SIX: TRASH");
 
             // DAY 6 ------------------------------------------------------------
             // ------------------------------------------------------------------
@@ -253,6 +262,24 @@ int main() {
                 std::thread(day_six_two, std::ref(day_6_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left, 566, btnWidth, btnHeight }, day_6_2.data(), 64, textbox_6_2)) textbox_6_2 = !textbox_6_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
+            GuiLine((Rectangle){ 10 + halfScreenWidth, 15, 460, 1 }, "DAY SEVEN: LABORATORIES");
+
+            // DAY 7 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left + halfScreenWidth, 30, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_7_1 = "..";
+                std::thread(day_seven_one, std::ref(day_7_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left + halfScreenWidth, 66, btnWidth, btnHeight }, day_7_1.data(), 64, textbox_7_1)) textbox_7_1 = !textbox_7_1;
+
+            if (GuiButton((Rectangle){ btn2Left + halfScreenWidth, 30, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_7_2 = "..";
+                std::thread(day_seven_two, std::ref(day_6_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left + halfScreenWidth, 66, btnWidth, btnHeight }, day_7_2.data(), 64, textbox_7_2)) textbox_7_2 = !textbox_7_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
@@ -669,7 +696,6 @@ void day_five_two(std::string &resultString) {
     stopStopwatch();
 }
 
-
 void day_six_one(std::string &resultString) {
     startStopwatch();
 
@@ -777,6 +803,44 @@ void day_six_two(std::string &resultString) {
 
 }
 
+void day_seven_one(std::string &resultString) {
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/7/test.txt" : "./src/inputs/7/input.txt";
+    auto board = reader.readFile(file1name);
+    int startingPos = board[0].find('S');
+    int boardWidth = board[0].size();
+    board[0][startingPos] = '|';
+
+    int solution = 0;
+
+    for(int i = 0; i < board.size(); i++) {
+        for(int j = 0; j < boardWidth; j++) {
+            auto current = board[i][j];
+
+            if(current == '.' && i > 0) {
+                // CASE: Normal field, ray above, continuing down
+                if(board[i-1][j] == '|') {
+                    board[i][j] = '|';
+                }
+            }
+
+            if(current == '^' && board[i-1][j] == '|') {
+                // CASE: Ray from above, splittn
+                if(j > 0) board[i][j-1] = '|';
+                if(j < boardWidth-1) board[i][j+1] = '|';
+                solution++;
+            }
+
+        }
+    }
+
+    resultString = std::to_string(solution);
+    stopStopwatch();
+}
+
+void day_seven_two(std::string &resultString) {}
 
 // UTILITIES
 
