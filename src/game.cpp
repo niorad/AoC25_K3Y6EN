@@ -44,6 +44,7 @@ void day_six_two(std::string& resultString);
 
 void day_seven_one(std::string& resultString);
 void day_seven_two(std::string& resultString);
+int countSplittersInLine(std::string &s);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -270,14 +271,14 @@ int main() {
             // DAY 7 ------------------------------------------------------------
             // ------------------------------------------------------------------
             if (GuiButton((Rectangle){ btn1Left + halfScreenWidth, 30, btnWidth, btnHeight }, "Puzzle 1")) {
-                day_7_1 = "..";
+                day_7_1 = "Splittn..";
                 std::thread(day_seven_one, std::ref(day_7_1)).detach();
             }
             if (GuiTextBox((Rectangle){ btn1Left + halfScreenWidth, 66, btnWidth, btnHeight }, day_7_1.data(), 64, textbox_7_1)) textbox_7_1 = !textbox_7_1;
 
             if (GuiButton((Rectangle){ btn2Left + halfScreenWidth, 30, btnWidth, btnHeight }, "Puzzle 2")) {
-                day_7_2 = "..";
-                std::thread(day_seven_two, std::ref(day_6_2)).detach();
+                day_7_2 = "Spittn..";
+                std::thread(day_seven_two, std::ref(day_7_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left + halfScreenWidth, 66, btnWidth, btnHeight }, day_7_2.data(), 64, textbox_7_2)) textbox_7_2 = !textbox_7_2;
             // ------------------------------------------------------------------
@@ -840,7 +841,49 @@ void day_seven_one(std::string &resultString) {
     stopStopwatch();
 }
 
-void day_seven_two(std::string &resultString) {}
+void day_seven_two(std::string &resultString) {
+
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/7/test.txt" : "./src/inputs/7/input.txt";
+    auto board = reader.readFile(file1name);
+    int startingPos = board[0].find('S');
+    int boardWidth = board[0].size();
+    std::vector<unsigned long long int> trackCounts = std::vector<unsigned long long int>(boardWidth, 0);
+    board[0][startingPos] = '|';
+    trackCounts[startingPos] = 1;
+
+    int solution = 0;
+
+    for(int i = 0; i < board.size(); i++) {
+        for(int j = 0; j < boardWidth; j++) {
+            auto current = board[i][j];
+
+            if(current == '.' && i > 0) {
+                if(board[i-1][j] == '|') {
+                    board[i][j] = '|';
+                }
+            }
+
+            if(current == '^' && board[i-1][j] == '|') {
+                if(j > 0) board[i][j-1] = '|';
+                if(j < boardWidth-1) board[i][j+1] = '|';
+            }
+
+            if(board[i][j] == '^' && board[i-1][j]) {
+                int64_t incomingCount = trackCounts[j];
+                trackCounts[j-1] += incomingCount;
+                trackCounts[j+1] += incomingCount;
+                trackCounts[j] = 0;
+            }
+        }
+    }
+
+    unsigned long long int acc = std::accumulate(trackCounts.begin(), trackCounts.end(), (unsigned long long int)0);
+    resultString = std::to_string(acc);
+    stopStopwatch();
+}
 
 // UTILITIES
 
@@ -962,4 +1005,15 @@ void mergeRanges(std::vector<FromTo64> &ranges) {
 
 bool compareByFromValue(const FromTo64 &a, const FromTo64 &b) {
     return a.from < b.from;
+}
+
+// Used for Day 7
+// didn't work but keeping it
+int countSplittersInLine(std::string &s) {
+    int occurences = 0;
+    std::string needle = "|^";
+    for(size_t offset = s.find(needle); offset != std::string::npos; offset = s.find(needle, offset + needle.length())) {
+        ++occurences;
+    }
+    return occurences;
 }
