@@ -45,6 +45,16 @@ void day_six_two(std::string& resultString);
 void day_seven_one(std::string& resultString);
 void day_seven_two(std::string& resultString);
 int countSplittersInLine(std::string &s);
+
+void day_eight_one(std::string& resultString);
+void day_eight_two(std::string& resultString);
+struct Circuit;
+struct DistanceItem;
+bool compareByDistance(const DistanceItem &a, const DistanceItem &b);
+float distance3d(Vector3 &a, Vector3 &b);
+bool junctionInCircuit(Vector3 j, Circuit & c);
+int findCircuitWithJunction(Vector3 junction, std::vector<Circuit> &circuits);
+bool compareByJunctionCount(const Circuit &a, const Circuit &b);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -69,6 +79,18 @@ struct BackgroundPoint {
     float speed;
     float hspeed;
 };
+
+struct Circuit {
+    std::vector<Vector3> junctions;
+};
+
+struct DistanceItem {
+    Vector3 a;
+    Vector3 b;
+    float dist;
+    Circuit * memberOf;
+};
+
 std::array<BackgroundPoint, 2500> backgroundPoints;
 
 // Let it snow let it snow let it snow
@@ -139,6 +161,11 @@ int main() {
     std::string day_7_2 = "<not solved>";
     bool textbox_7_1 = false;
     bool textbox_7_2 = false;
+
+    std::string day_8_1 = "<not solved>";
+    std::string day_8_2 = "<not solved>";
+    bool textbox_8_1 = false;
+    bool textbox_8_2 = false;
 
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
@@ -283,6 +310,25 @@ int main() {
             if (GuiTextBox((Rectangle){ btn2Left + halfScreenWidth, 66, btnWidth, btnHeight }, day_7_2.data(), 64, textbox_7_2)) textbox_7_2 = !textbox_7_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
+
+            GuiLine((Rectangle){ 10 + halfScreenWidth, 115, 460, 1 }, "DAY EIGHT: ...");
+
+            // DAY 8 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left + halfScreenWidth, 130, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_8_1 = "Connecting junctions..";
+                std::thread(day_eight_one, std::ref(day_8_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left + halfScreenWidth, 166, btnWidth, btnHeight }, day_8_1.data(), 64, textbox_8_1)) textbox_8_1 = !textbox_8_1;
+
+            if (GuiButton((Rectangle){ btn2Left + halfScreenWidth, 130, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_8_2 = "Junking Connections..";
+                std::thread(day_eight_two, std::ref(day_8_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left + halfScreenWidth, 166, btnWidth, btnHeight }, day_8_2.data(), 64, textbox_8_2)) textbox_8_2 = !textbox_8_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
 
             GuiGroupBox((Rectangle){ 10, 690, 220, 40 }, "LOG");
             GuiLabel((Rectangle){ 20, 690, 220, 40 }, globalLogString.data());
@@ -885,6 +931,158 @@ void day_seven_two(std::string &resultString) {
     stopStopwatch();
 }
 
+void day_eight_one(std::string &resultString) {
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/8/test.txt" : "./src/inputs/8/input.txt";
+    auto vectorsLines = reader.readFile(file1name);
+
+    std::vector<Vector3> vectorList;
+    std::vector<DistanceItem> distances;
+    std::vector<Circuit> circuits;
+
+    // input to vector3 list
+    for(auto line : vectorsLines) {
+        std::stringstream ss(line);
+        std::string tempStr;
+        std::vector<int> tempContainer;
+        while(getline(ss, tempStr, ',')) {
+            tempContainer.push_back(std::stoi(tempStr));
+        };
+        vectorList.push_back(Vector3{(float)tempContainer[0], (float)tempContainer[1], (float)tempContainer[2]});
+    };
+
+    // vector3 list to distance, maybe TODO left for i j +- 1 index etc.
+    for(int i = 0; i < vectorList.size(); i++) {
+        for(int j = i + 1; j < vectorList.size(); j++) {
+            if(Vector3Equals(vectorList[i], vectorList[j])) continue;
+            DistanceItem d{
+                vectorList[i],
+                vectorList[j],
+                Vector3Distance(vectorList[i], vectorList[j]),
+                NULL};
+            distances.push_back(d);
+        };
+    };
+
+    // sorting by distance
+    std::sort(distances.begin(), distances.end(), compareByDistance);
+
+    // junctions to circuits
+    // the first 10 or 1000 are the interesting ones.
+    int maxI = useTestData ? 10 : 1000;
+    for(int i = 0; i < maxI; i++){
+
+        int circuitAIndex = findCircuitWithJunction(distances[i].a, circuits);
+        int circuitBIndex = findCircuitWithJunction(distances[i].b, circuits);
+
+        if(circuitAIndex == -1 && circuitBIndex == -1) {
+            // both are not yet inside circuits
+            // a new circuit is born
+            Circuit newCircuit;
+            newCircuit.junctions.push_back(distances[i].a);
+            newCircuit.junctions.push_back(distances[i].b);
+            circuits.push_back(newCircuit);
+        } else if(circuitAIndex == -1 && circuitBIndex > -1) {
+            // put junction A into circuit B
+            circuits[circuitBIndex].junctions.push_back(distances[i].a);
+        } else if(circuitAIndex > -1 && circuitBIndex == -1) {
+            // put junction B into circuit A
+            circuits[circuitAIndex].junctions.push_back(distances[i].b);
+        } else if(circuitAIndex == circuitBIndex) {
+            // both in same, do nothing!
+        } else if(circuitAIndex >= 0 && circuitBIndex >= 0 && circuitAIndex != circuitBIndex) {
+            // MERGE SHIT OMG merge B to A or something
+            circuits[circuitAIndex].junctions.insert(circuits[circuitAIndex].junctions.end(), circuits[circuitBIndex].junctions.begin(), circuits[circuitBIndex].junctions.end());
+            circuits.erase(circuits.begin() + circuitBIndex);
+        };
+    }
+
+    // sorting by junction count
+    std::sort(circuits.begin(), circuits.end(), compareByJunctionCount);
+
+    int res = circuits[0].junctions.size() * circuits[1].junctions.size() * circuits[2].junctions.size();
+
+    resultString = std::to_string(res);
+    stopStopwatch();
+}
+
+void day_eight_two(std::string &resultString) {
+
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/8/test.txt" : "./src/inputs/8/input.txt";
+    auto vectorsLines = reader.readFile(file1name);
+
+    std::vector<Vector3> vectorList;
+    std::vector<DistanceItem> distances;
+    std::vector<Circuit> circuits;
+
+    // input to vector3 list
+    for(auto line : vectorsLines) {
+        std::stringstream ss(line);
+        std::string tempStr;
+        std::vector<int> tempContainer;
+        while(getline(ss, tempStr, ',')) {
+            tempContainer.push_back(std::stoi(tempStr));
+        };
+        vectorList.push_back(Vector3{(float)tempContainer[0], (float)tempContainer[1], (float)tempContainer[2]});
+    };
+
+    // vector3 list to distance, maybe TODO left for i j +- 1 index etc.
+    for(int i = 0; i < vectorList.size(); i++) {
+        for(int j = i + 1; j < vectorList.size(); j++) {
+            if(Vector3Equals(vectorList[i], vectorList[j])) continue;
+            DistanceItem d{
+                vectorList[i],
+                vectorList[j],
+                Vector3Distance(vectorList[i], vectorList[j]),
+                NULL};
+            distances.push_back(d);
+        };
+    };
+
+    // sorting by distance
+    std::sort(distances.begin(), distances.end(), compareByDistance);
+
+    long long int solution = 0;
+
+    for(int i = 0; i < 1000000; i++){
+
+        int circuitAIndex = findCircuitWithJunction(distances[i].a, circuits);
+        int circuitBIndex = findCircuitWithJunction(distances[i].b, circuits);
+
+        if(circuitAIndex == -1 && circuitBIndex == -1) {
+            // both are not yet inside circuits
+            // a new circuit is born
+            Circuit newCircuit;
+            newCircuit.junctions.push_back(distances[i].a);
+            newCircuit.junctions.push_back(distances[i].b);
+            circuits.push_back(newCircuit);
+        } else if(circuitAIndex == -1 && circuitBIndex > -1) {
+            // put junction A into circuit B
+            circuits[circuitBIndex].junctions.push_back(distances[i].a);
+        } else if(circuitAIndex > -1 && circuitBIndex == -1) {
+            // put junction B into circuit A
+            circuits[circuitAIndex].junctions.push_back(distances[i].b);
+        } else if(circuitAIndex == circuitBIndex) {
+            // both in same, do nothing!
+        } else if(circuitAIndex >= 0 && circuitBIndex >= 0 && circuitAIndex != circuitBIndex) {
+            // MERGE SHIT OMG merge B to A or something
+            circuits[circuitAIndex].junctions.insert(circuits[circuitAIndex].junctions.end(), circuits[circuitBIndex].junctions.begin(), circuits[circuitBIndex].junctions.end());
+            circuits.erase(circuits.begin() + circuitBIndex);
+        };
+        if(circuits.size() == 1 && circuits[0].junctions.size() == vectorList.size()) {
+            solution = (long int)distances[i].a.x * (long int)distances[i].b.x;
+            break;
+        }
+    }
+    resultString = std::to_string(solution);
+    stopStopwatch();
+}
+
 // UTILITIES
 
 // Used for 2_2, checks for repeating patterns in a string up to a length of ten
@@ -1016,4 +1214,33 @@ int countSplittersInLine(std::string &s) {
         ++occurences;
     }
     return occurences;
+}
+
+// For Day 8
+float distance3d(Vector3 &a, Vector3 &b) {
+    return Vector3Distance(a, b);
+}
+
+bool junctionInCircuit(Vector3 j, Circuit & c) {
+    for(int i = 0; i < c.junctions.size(); i++) {
+        if(Vector3Equals(j, c.junctions[i])) return true;
+    }
+    return false;
+}
+
+int findCircuitWithJunction(Vector3 junction, std::vector<Circuit> &circuits) {
+    for(int i = 0; i < circuits.size(); i++) {
+        for(int j = 0; j < circuits[i].junctions.size(); j++) {
+            if(Vector3Equals(junction, circuits[i].junctions[j])) return i;
+        }
+    }
+    return -1;
+}
+
+bool compareByDistance(const DistanceItem &a, const DistanceItem &b) {
+    return a.dist < b.dist;
+}
+
+bool compareByJunctionCount(const Circuit &a, const Circuit &b) {
+    return a.junctions.size() > b.junctions.size();
 }
