@@ -15,6 +15,10 @@
 #include <raygui.h>
 #include <style_cyber.h>
 
+float visualiserX = 490;
+float visualiserY = 620;
+float visualiserW = 460;
+float visualiserH = 170;
 
 // Definitions.. geez
 struct HighestListNumber;
@@ -55,12 +59,15 @@ float distance3d(Vector3 &a, Vector3 &b);
 bool junctionInCircuit(Vector3 j, Circuit & c);
 int findCircuitWithJunction(Vector3 junction, std::vector<Circuit> &circuits);
 bool compareByJunctionCount(const Circuit &a, const Circuit &b);
+std::vector<Vector3> vis_8_points;
+void visualize_8_1();
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
 auto globalTimerStop = std::chrono::high_resolution_clock::now();
 std::string globalLogString = "2025 by ni0r4d";
 bool useTestData = true;
+std::string currentVis = "8_1";
 
 struct HighestListNumber {
     int number;
@@ -119,6 +126,7 @@ int main() {
 
     int screenWidth = 960;
     int screenHeight = 800;
+
     float halfScreenWidth = screenWidth / 2;
     float btnMargin = 10;
     float btn1Left = btnMargin;
@@ -311,17 +319,17 @@ int main() {
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
-            GuiLine((Rectangle){ 10 + halfScreenWidth, 115, 460, 1 }, "DAY EIGHT: ...");
+            GuiLine((Rectangle){ 10 + halfScreenWidth, 115, 460, 1 }, "DAY EIGHT: JUNCTION CITY");
 
             // DAY 8 ------------------------------------------------------------
             // ------------------------------------------------------------------
-            if (GuiButton((Rectangle){ btn1Left + halfScreenWidth, 130, btnWidth, btnHeight }, "Puzzle 1")) {
+            if (GuiButton((Rectangle){ btn1Left + halfScreenWidth, 130, btnWidth, btnHeight }, "#44#Puzzle 1")) {
                 day_8_1 = "Connecting junctions..";
                 std::thread(day_eight_one, std::ref(day_8_1)).detach();
             }
             if (GuiTextBox((Rectangle){ btn1Left + halfScreenWidth, 166, btnWidth, btnHeight }, day_8_1.data(), 64, textbox_8_1)) textbox_8_1 = !textbox_8_1;
 
-            if (GuiButton((Rectangle){ btn2Left + halfScreenWidth, 130, btnWidth, btnHeight }, "Puzzle 2")) {
+            if (GuiButton((Rectangle){ btn2Left + halfScreenWidth, 130, btnWidth, btnHeight }, "#44#Puzzle 2")) {
                 day_8_2 = "Junking Connections..";
                 std::thread(day_eight_two, std::ref(day_8_2)).detach();
             };
@@ -330,9 +338,13 @@ int main() {
             // ------------------------------------------------------------------
 
 
-            GuiGroupBox((Rectangle){ 10, 690, 220, 40 }, "LOG");
-            GuiLabel((Rectangle){ 20, 690, 220, 40 }, globalLogString.data());
-            GuiCheckBox((Rectangle){ 240, 700, 20, 20 }, "use test data", &useTestData);
+            GuiGroupBox((Rectangle){ 10, 750, btnWidth, 40 }, "LOG");
+            GuiLabel((Rectangle){ 20, 750, 220, 40 }, globalLogString.data());
+            GuiCheckBox((Rectangle){ 246, 760, 20, 20 }, "use test data", &useTestData);
+            DrawRectangle(visualiserX, visualiserY, visualiserW, visualiserH, ColorAlpha(BLACK, 0.8f));
+            GuiGroupBox((Rectangle){visualiserX, visualiserY, visualiserW, visualiserH}, "VISUALIZER");
+
+            if(currentVis == "8_1") visualize_8_1();
 
         EndDrawing();
     }
@@ -942,6 +954,8 @@ void day_eight_one(std::string &resultString) {
     std::vector<DistanceItem> distances;
     std::vector<Circuit> circuits;
 
+    vis_8_points.clear();
+
     // input to vector3 list
     for(auto line : vectorsLines) {
         std::stringstream ss(line);
@@ -951,6 +965,7 @@ void day_eight_one(std::string &resultString) {
             tempContainer.push_back(std::stoi(tempStr));
         };
         vectorList.push_back(Vector3{(float)tempContainer[0], (float)tempContainer[1], (float)tempContainer[2]});
+        vis_8_points.push_back(Vector3{(float)tempContainer[0], (float)tempContainer[1], (float)tempContainer[2]});
     };
 
     // vector3 list to distance, maybe TODO left for i j +- 1 index etc.
@@ -1020,6 +1035,8 @@ void day_eight_two(std::string &resultString) {
     std::vector<DistanceItem> distances;
     std::vector<Circuit> circuits;
 
+    vis_8_points.clear();
+
     // input to vector3 list
     for(auto line : vectorsLines) {
         std::stringstream ss(line);
@@ -1029,9 +1046,9 @@ void day_eight_two(std::string &resultString) {
             tempContainer.push_back(std::stoi(tempStr));
         };
         vectorList.push_back(Vector3{(float)tempContainer[0], (float)tempContainer[1], (float)tempContainer[2]});
+        vis_8_points.push_back(Vector3{(float)tempContainer[0], (float)tempContainer[1], (float)tempContainer[2]});
     };
 
-    // vector3 list to distance, maybe TODO left for i j +- 1 index etc.
     for(int i = 0; i < vectorList.size(); i++) {
         for(int j = i + 1; j < vectorList.size(); j++) {
             if(Vector3Equals(vectorList[i], vectorList[j])) continue;
@@ -1082,6 +1099,7 @@ void day_eight_two(std::string &resultString) {
     resultString = std::to_string(solution);
     stopStopwatch();
 }
+
 
 // UTILITIES
 
@@ -1200,7 +1218,6 @@ void mergeRanges(std::vector<FromTo64> &ranges) {
     }
 
 }
-
 bool compareByFromValue(const FromTo64 &a, const FromTo64 &b) {
     return a.from < b.from;
 }
@@ -1220,14 +1237,12 @@ int countSplittersInLine(std::string &s) {
 float distance3d(Vector3 &a, Vector3 &b) {
     return Vector3Distance(a, b);
 }
-
 bool junctionInCircuit(Vector3 j, Circuit & c) {
     for(int i = 0; i < c.junctions.size(); i++) {
         if(Vector3Equals(j, c.junctions[i])) return true;
     }
     return false;
 }
-
 int findCircuitWithJunction(Vector3 junction, std::vector<Circuit> &circuits) {
     for(int i = 0; i < circuits.size(); i++) {
         for(int j = 0; j < circuits[i].junctions.size(); j++) {
@@ -1236,11 +1251,21 @@ int findCircuitWithJunction(Vector3 junction, std::vector<Circuit> &circuits) {
     }
     return -1;
 }
-
 bool compareByDistance(const DistanceItem &a, const DistanceItem &b) {
     return a.dist < b.dist;
 }
-
 bool compareByJunctionCount(const Circuit &a, const Circuit &b) {
     return a.junctions.size() > b.junctions.size();
+}
+
+void visualize_8_1() {
+    int range = useTestData ? 1000 : 100000;
+    auto c = GetColor(GuiGetStyle(DEFAULT, (int)LINE_COLOR));
+    for(auto p : vis_8_points) {
+
+        int x = Remap(p.x, 0, range, visualiserX, visualiserX + visualiserW);
+        int y = Remap(p.y, 0, range, visualiserY, visualiserY + visualiserH);
+        float f = Remap(p.z, 0, range, 0, 1);
+        DrawPixel(x, y, ColorAlpha(c, f));
+    };
 }
