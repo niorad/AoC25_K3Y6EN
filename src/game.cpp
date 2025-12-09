@@ -23,6 +23,8 @@ float visualiserH = 170;
 // Definitions.. geez
 struct HighestListNumber;
 struct FromTo64;
+struct IntVec2;
+struct TileRectangle;
 
 void day_one_one(std::string& resultString);
 void day_one_two(std::string& resultString);
@@ -61,6 +63,11 @@ int findCircuitWithJunction(Vector3 junction, std::vector<Circuit> &circuits);
 bool compareByJunctionCount(const Circuit &a, const Circuit &b);
 std::vector<Vector3> vis_8_points;
 void visualize_8_1();
+
+void day_nine_one(std::string& resultString);
+void day_nine_two(std::string& resultString);
+long long int rectArea(IntVec2 a, IntVec2 b);
+bool compareByArea(const TileRectangle &a, const TileRectangle &b);
 // end of definitions.. geez
 
 auto globalTimerStart = std::chrono::high_resolution_clock::now();
@@ -85,6 +92,17 @@ struct BackgroundPoint {
     float opacity;
     float speed;
     float hspeed;
+};
+
+struct IntVec2 {
+    long long int x;
+    long long int y;
+};
+
+struct TileRectangle {
+    IntVec2 a;
+    IntVec2 b;
+    long long int area;
 };
 
 struct Circuit {
@@ -174,6 +192,11 @@ int main() {
     std::string day_8_2 = "<not solved>";
     bool textbox_8_1 = false;
     bool textbox_8_2 = false;
+
+    std::string day_9_1 = "<not solved>";
+    std::string day_9_2 = "<not solved>";
+    bool textbox_9_1 = false;
+    bool textbox_9_2 = false;
 
     InitWindow(screenWidth, screenHeight, "AoC25_K3Y6eN");
     SetTargetFPS(60);
@@ -334,6 +357,24 @@ int main() {
                 std::thread(day_eight_two, std::ref(day_8_2)).detach();
             };
             if (GuiTextBox((Rectangle){ btn2Left + halfScreenWidth, 166, btnWidth, btnHeight }, day_8_2.data(), 64, textbox_8_2)) textbox_8_2 = !textbox_8_2;
+            // ------------------------------------------------------------------
+            // ------------------------------------------------------------------
+
+            GuiLine((Rectangle){ 10 + halfScreenWidth, 215, 460, 1 }, "DAY NINE");
+
+            // DAY 9 ------------------------------------------------------------
+            // ------------------------------------------------------------------
+            if (GuiButton((Rectangle){ btn1Left + halfScreenWidth, 230, btnWidth, btnHeight }, "Puzzle 1")) {
+                day_9_1 = "..";
+                std::thread(day_nine_one, std::ref(day_9_1)).detach();
+            }
+            if (GuiTextBox((Rectangle){ btn1Left + halfScreenWidth, 266, btnWidth, btnHeight }, day_9_1.data(), 64, textbox_9_1)) textbox_9_1 = !textbox_9_1;
+
+            if (GuiButton((Rectangle){ btn2Left + halfScreenWidth, 230, btnWidth, btnHeight }, "Puzzle 2")) {
+                day_9_2 = "..";
+                std::thread(day_nine_two, std::ref(day_9_2)).detach();
+            };
+            if (GuiTextBox((Rectangle){ btn2Left + halfScreenWidth, 266, btnWidth, btnHeight }, day_9_2.data(), 64, textbox_9_2)) textbox_9_2 = !textbox_9_2;
             // ------------------------------------------------------------------
             // ------------------------------------------------------------------
 
@@ -1101,6 +1142,89 @@ void day_eight_two(std::string &resultString) {
 }
 
 
+void day_nine_one(std::string &resultString) {
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/9/test.txt" : "./src/inputs/9/input.txt";
+    auto vectorsLines = reader.readFile(file1name);
+
+    std::vector<IntVec2> vectorList;
+    std::vector<TileRectangle> rects;
+
+    // input to vector2 list
+    for(auto line : vectorsLines) {
+        std::stringstream ss(line);
+        std::string tempStr;
+        std::vector<long long int> tempContainer;
+        while(getline(ss, tempStr, ',')) {
+            tempContainer.push_back(std::stoi(tempStr));
+        };
+        vectorList.push_back(IntVec2{tempContainer[0], tempContainer[1]});
+    };
+
+    for(int i = 0; i < vectorList.size(); i++) {
+        for(int j = i + 1; j < vectorList.size(); j++) {
+            TileRectangle r{
+                vectorList[i],
+                vectorList[j],
+                rectArea(vectorList[i], vectorList[j])};
+            rects.push_back(r);
+        };
+    };
+
+    std::sort(rects.begin(), rects.end(), compareByArea);
+
+    long long int solution = rects[0].area;
+    resultString = std::to_string(solution);
+    stopStopwatch();
+}
+
+
+void day_nine_two(std::string &resultString) {
+
+    startStopwatch();
+
+    const auto reader = Reader();
+    const auto file1name = useTestData ? "./src/inputs/9/test.txt" : "./src/inputs/9/input.txt";
+    auto vectorsLines = reader.readFile(file1name);
+
+    std::vector<IntVec2> vectorList;
+    std::vector<TileRectangle> rects;
+
+    // input to vector2 list
+    for(auto line : vectorsLines) {
+        std::stringstream ss(line);
+        std::string tempStr;
+        std::vector<long long int> tempContainer;
+        while(getline(ss, tempStr, ',')) {
+            tempContainer.push_back(std::stoi(tempStr));
+        };
+        vectorList.push_back(IntVec2{tempContainer[0], tempContainer[1]});
+    };
+
+    for(int i = 0; i < vectorList.size(); i++) {
+        for(int j = i + 1; j < vectorList.size(); j++) {
+            TileRectangle r{
+                vectorList[i],
+                vectorList[j],
+                rectArea(vectorList[i], vectorList[j])};
+            rects.push_back(r);
+        };
+    };
+
+    std::sort(rects.begin(), rects.end(), compareByArea);
+
+    long long int solution = rects[0].area;
+    resultString = std::to_string(solution);
+    stopStopwatch();
+}
+
+
+
+}
+
+
 // UTILITIES
 
 // Used for 2_2, checks for repeating patterns in a string up to a length of ten
@@ -1257,7 +1381,6 @@ bool compareByDistance(const DistanceItem &a, const DistanceItem &b) {
 bool compareByJunctionCount(const Circuit &a, const Circuit &b) {
     return a.junctions.size() > b.junctions.size();
 }
-
 void visualize_8_1() {
     int range = useTestData ? 1000 : 100000;
     auto c = GetColor(GuiGetStyle(DEFAULT, (int)LINE_COLOR));
@@ -1269,3 +1392,14 @@ void visualize_8_1() {
         DrawPixel(x, y, ColorAlpha(c, f));
     };
 }
+
+// Day 9
+long long int rectArea(IntVec2 a, IntVec2 b) {
+    long long int width = b.x - a.x;
+    long long int height = b.y - a.y;
+    return (abs(a.x - b.x) + 1) * (abs(a.y - b.y) + 1);
+}
+bool compareByArea(const TileRectangle &a, const TileRectangle &b) {
+    return a.area > b.area;
+}
+
